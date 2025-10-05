@@ -1,6 +1,6 @@
 FROM python:3.10-slim-bullseye
 
-# تثبيت المتطلبات النظامية بما في ذلك تبعيات playwright
+# تثبيت المتطلبات النظامية
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -24,4 +24,23 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon0 \
     libpango-1.0-0 \
     libcairo2 \
-    libatspi
+    libatspi2.0-0 \
+    libgbm1 \
+    libasound2 \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# نسخ الملفات
+COPY requirements.txt .
+COPY . .
+
+# تثبيت متطلبات البايثون
+RUN pip install --no-cache-dir -r requirements.txt
+
+# تثبيت playwright والمتصفحات
+RUN playwright install chromium
+RUN playwright install --with-deps chromium
+
+CMD ["python3", "main.py"]
