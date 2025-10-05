@@ -5,7 +5,6 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     gnupg \
-    git \
     && apt-get install -y \
     libnss3 \
     libnspr4 \
@@ -34,13 +33,12 @@ WORKDIR /app
 
 # نسخ الملفات
 COPY requirements.txt .
-COPY . .
+COPY *.py ./
 
 # تثبيت متطلبات البايثون
 RUN pip install --no-cache-dir -r requirements.txt
 
 # تثبيت playwright والمتصفحات
 RUN playwright install chromium
-RUN playwright install --with-deps chromium
 
 CMD ["python3", "main.py"]
