@@ -1,0 +1,12 @@
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+startCommand = "python main.py"
+
+[[services]]
+name = "trading-bot"
+type = "worker"
+
+[services.env]
+PLAYWRIGHT_BROWSERS_PATH = "/ms-playwright"
