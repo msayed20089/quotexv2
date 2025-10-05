@@ -1,8 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application
+import telegram
 import logging
 import random
-import asyncio
 from datetime import datetime
 from config import UTC3_TZ, TELEGRAM_TOKEN, CHANNEL_ID, QX_SIGNUP_URL
 
@@ -12,8 +11,7 @@ class TelegramBot:
         self.channel_id = CHANNEL_ID
         self.signup_url = QX_SIGNUP_URL
         try:
-            self.application = Application.builder().token(self.token).build()
-            self.bot = self.application.bot
+            self.bot = telegram.Bot(token=self.token)
         except Exception as e:
             logging.error(f"خطأ في تهيئة بوت التليجرام: {e}")
             self.bot = None
@@ -27,13 +25,13 @@ class TelegramBot:
         keyboard = [[InlineKeyboardButton("📈 سجل في كيوتكس واحصل على 30% بونص", url=self.signup_url)]]
         return InlineKeyboardMarkup(keyboard)
     
-    async def send_message_async(self, text, chat_id=None):
-        """إرسال رسالة مع زر التسجيل (async)"""
+    def send_message(self, text, chat_id=None):
+        """إرسال رسالة مع زر التسجيل"""
         if chat_id is None:
             chat_id = self.channel_id
             
         try:
-            await self.bot.send_message(
+            self.bot.send_message(
                 chat_id=chat_id,
                 text=text,
                 reply_markup=self.create_signup_button(),
@@ -41,17 +39,6 @@ class TelegramBot:
             )
             logging.info("✅ تم إرسال الرسالة بنجاح")
             return True
-        except Exception as e:
-            logging.error(f"❌ خطأ في إرسال الرسالة: {e}")
-            return False
-
-    def send_message(self, text, chat_id=None):
-        """إرسال رسالة (sync wrapper)"""
-        if self.bot is None:
-            return False
-        try:
-            # تشغيل الدالة async في event loop
-            return asyncio.run(self.send_message_async(text, chat_id))
         except Exception as e:
             logging.error(f"❌ خطأ في إرسال الرسالة: {e}")
             return False
