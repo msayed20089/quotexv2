@@ -134,94 +134,58 @@ class TradingScheduler:
         except Exception as e:
             logging.error(f"❌ خطأ في دورة الصفقة: {e}")
     
-   def start_trade_execution(self, trade_id):
-    """بدء تنفيذ الصفقة في المنصة"""
-    try:
-        if trade_id not in self.pending_trades:
-            logging.error(f"❌ لم يتم العثور على الصفقة: {trade_id}")
-            return
-            
-        trade_info = self.pending_trades[trade_id]
-        trade_data = trade_info['data']
-        
-        # تنفيذ الصفقة في المنصة (بدون thread جديد)
-        success = self.qx_manager.execute_trade(
-            trade_data['pair'],
-            trade_data['direction'],
-            trade_data['duration']
-        )
-        
-        if success:
-            logging.info(f"✅ بدء صفقة في المنصة: {trade_data['pair']} - {trade_data['direction']}")
-            
-            # الحصول على النتيجة مباشرة
-            result = self.qx_manager.get_trade_result()
-            
-            # تحديث الإحصائيات
-            self.stats['total_trades'] += 1
-            if result == 'WIN':
-                self.stats['win_trades'] += 1
-            else:
-                self.stats['loss_trades'] += 1
-            self.stats['net_profit'] = self.stats['win_trades'] - self.stats['loss_trades']
-            
-            # إرسال النتيجة
-            self.telegram_bot.send_trade_result(
-                trade_data['pair'],
-                result,
-                self.stats
-            )
-            
-            current_time = self.get_utc3_time().strftime("%H:%M:%S")
-            logging.info(f"🎯 نتيجة صفقة: {trade_data['pair']} - {result} - الوقت: {current_time} (UTC+3)")
-            
-        else:
-            logging.error(f"❌ فشل تنفيذ الصفقة في المنصة: {trade_data['pair']}")
-            
-        # مسح الصفقة سواء نجحت أو فشلت
-        if trade_id in self.pending_trades:
-            del self.pending_trades[trade_id]
-            
-    except Exception as e:
-        logging.error(f"❌ خطأ في تنفيذ الصفقة: {e}")
-        if trade_id in self.pending_trades:
-            del self.pending_trades[trade_id]
-    def publish_trade_result(self, trade_id):
-        """نشر نتيجة الصفقة"""
+    def start_trade_execution(self, trade_id):
+        """بدء تنفيذ الصفقة في المنصة"""
         try:
             if trade_id not in self.pending_trades:
-                logging.error(f"❌ لم يتم العثور على الصفقة للنشر: {trade_id}")
+                logging.error(f"❌ لم يتم العثور على الصفقة: {trade_id}")
                 return
                 
             trade_info = self.pending_trades[trade_id]
             trade_data = trade_info['data']
             
-            # الحصول على النتيجة من المنصة
-            result = self.qx_manager.get_trade_result()
-            
-            # تحديث الإحصائيات
-            self.stats['total_trades'] += 1
-            if result == 'WIN':
-                self.stats['win_trades'] += 1
-            else:
-                self.stats['loss_trades'] += 1
-            self.stats['net_profit'] = self.stats['win_trades'] - self.stats['loss_trades']
-            
-            # إرسال النتيجة
-            self.telegram_bot.send_trade_result(
+            # تنفيذ الصفقة في المنصة (بدون thread جديد)
+            success = self.qx_manager.execute_trade(
                 trade_data['pair'],
-                result,
-                self.stats
+                trade_data['direction'],
+                trade_data['duration']
             )
             
-            current_time = self.get_utc3_time().strftime("%H:%M:%S")
-            logging.info(f"🎯 نتيجة صفقة: {trade_data['pair']} - {result} - الوقت: {current_time} (UTC+3)")
-            
-            # مسح الصفقة
-            del self.pending_trades[trade_id]
-            
+            if success:
+                logging.info(f"✅ بدء صفقة في المنصة: {trade_data['pair']} - {trade_data['direction']}")
+                
+                # الحصول على النتيجة مباشرة
+                result = self.qx_manager.get_trade_result()
+                
+                # تحديث الإحصائيات
+                self.stats['total_trades'] += 1
+                if result == 'WIN':
+                    self.stats['win_trades'] += 1
+                else:
+                    self.stats['loss_trades'] += 1
+                self.stats['net_profit'] = self.stats['win_trades'] - self.stats['loss_trades']
+                
+                # إرسال النتيجة
+                self.telegram_bot.send_trade_result(
+                    trade_data['pair'],
+                    result,
+                    self.stats
+                )
+                
+                current_time = self.get_utc3_time().strftime("%H:%M:%S")
+                logging.info(f"🎯 نتيجة صفقة: {trade_data['pair']} - {result} - الوقت: {current_time} (UTC+3)")
+                
+            else:
+                logging.error(f"❌ فشل تنفيذ الصفقة في المنصة: {trade_data['pair']}")
+                
+            # مسح الصفقة سواء نجحت أو فشلت
+            if trade_id in self.pending_trades:
+                del self.pending_trades[trade_id]
+                
         except Exception as e:
-            logging.error(f"❌ خطأ في نشر النتيجة: {e}")
+            logging.error(f"❌ خطأ في تنفيذ الصفقة: {e}")
+            if trade_id in self.pending_trades:
+                del self.pending_trades[trade_id]
     
     def send_health_report(self):
         """إرسال تقرير صحة النظام"""
