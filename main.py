@@ -1,10 +1,9 @@
 from telegram_bot import TelegramBot
-from scheduler import TradingScheduler
+from simple_scheduler import SimpleTradingScheduler
 import logging
 import threading
 import time
 import sys
-import os
 
 # إعداد التسجيل
 logging.basicConfig(
@@ -43,26 +42,11 @@ def main():
         if telegram_bot.send_message("🟢 **بدء تشغيل البوت**\n\nجاري تهيئة النظام..."):
             logger.info("✅ تم الاتصال بنجاح ببوت التليجرام")
         
-        # تشغيل الجدولة
-        logger.info("⏰ جاري تشغيل جدولة المهام...")
-        scheduler = TradingScheduler()
+        # تشغيل الجدولة المبسطة
+        logger.info("⏰ جاري تشغيل جدولة المهام المبسطة...")
+        scheduler = SimpleTradingScheduler()
+        scheduler.run()
         
-        # تشغيل الجدولة في thread منفصل
-        scheduler_thread = threading.Thread(target=scheduler.run_scheduler)
-        scheduler_thread.daemon = True
-        scheduler_thread.start()
-        
-        logger.info("✅ بوت التداول الآلي يعمل بنجاح!")
-        logger.info("📊 البوت سيبدأ الصفقات فوراً")
-        
-        # حلقة رئيسية
-        counter = 0
-        while True:
-            time.sleep(60)
-            counter += 1
-            if counter % 5 == 0:
-                logger.info("📡 البوت يعمل بشكل مستمر...")
-            
     except Exception as e:
         logger.error(f"❌ خطأ في التشغيل: {e}")
         logger.info("🔄 إعادة التشغيل بعد 30 ثانية...")
