@@ -39,13 +39,38 @@ class QXBrokerManager:
                 ]
             )
             
-            self.page = self.browser.new_page()
-            self.page.set_default_timeout(30000)
+            self.create_new_page()
             logging.info("✅ تم إعداد المتصفح باستخدام Playwright بنجاح")
             
         except Exception as e:
             logging.error(f"❌ خطأ في إعداد المتصفح: {e}")
             self.browser = None
+
+    def create_new_page(self):
+        """إنشاء صفحة جديدة"""
+        if self.browser:
+            try:
+                if self.page and not self.page.is_closed():
+                    self.page.close()
+                self.page = self.browser.new_page()
+                self.page.set_default_timeout(30000)
+                return True
+            except Exception as e:
+                logging.error(f"❌ خطأ في إنشاء صفحة جديدة: {e}")
+                return False
+        return False
+
+    def ensure_page(self):
+        """التأكد من وجود صفحة نشطة"""
+        if not self.browser:
+            return False
+            
+        try:
+            if self.page is None or self.page.is_closed():
+                return self.create_new_page()
+            return True
+        except:
+            return self.create_new_page()
 
     def ensure_login(self):
         """التأكد من تسجيل الدخول"""
@@ -55,9 +80,8 @@ class QXBrokerManager:
             return True
             
         try:
-            # استخدام صفحة جديدة لكل عملية لتجنب مشاكل threading
-            if self.page.is_closed():
-                self.page = self.browser.new_page()
+            if not self.ensure_page():
+                return False
                 
             self.page.goto("https://qxbroker.com/ar/demo-trade", wait_until="networkidle")
             time.sleep(3)
@@ -102,11 +126,9 @@ class QXBrokerManager:
         try:
             logging.info("🔗 جاري تسجيل الدخول...")
             
-            # استخدام صفحة جديدة للتسجيل
-            if not self.page.is_closed():
-                self.page.close()
-            self.page = self.browser.new_page()
-            
+            if not self.ensure_page():
+                return False
+                
             self.page.goto("https://qxbroker.com/ar/sign-in", wait_until="networkidle")
             time.sleep(3)
             
@@ -147,11 +169,9 @@ class QXBrokerManager:
             return True
             
         try:
-            # استخدام صفحة جديدة لكل صفقة
-            if not self.page.is_closed():
-                self.page.close()
-            self.page = self.browser.new_page()
-            
+            if not self.ensure_page():
+                return False
+                
             if not self.is_logged_in and not self.ensure_login():
                 return False
             
@@ -276,11 +296,9 @@ class QXBrokerManager:
             logging.info("⏳ في انتظار نتيجة الصفقة...")
             time.sleep(35)
             
-            # استخدام صفحة جديدة للنتيجة
-            if not self.page.is_closed():
-                self.page.close()
-            self.page = self.browser.new_page()
-            
+            if not self.ensure_page():
+                return random.choice(['WIN', 'LOSS'])
+                
             self.page.goto("https://qxbroker.com/ar/demo-trade", wait_until="networkidle")
             time.sleep(3)
             
@@ -306,9 +324,8 @@ class QXBrokerManager:
         try:
             if time.time() - self.last_activity > 600:
                 logging.info("🔄 تجديد نشاط المتصفح...")
-                if not self.page.is_closed():
-                    self.page.close()
-                self.page = self.browser.new_page()
+                if not self.ensure_page():
+                    return False
                 self.page.goto("https://qxbroker.com/ar/demo-trade")
                 time.sleep(3)
             return True
